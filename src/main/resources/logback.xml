@@ -1,0 +1,20 @@
+<configuration>
+
+    <!-- give the async appenders time to shutdown -->
+    <shutdownHook class="ch.qos.logback.core.hook.DelayingShutdownHook">
+        <delay>100</delay>
+    </shutdownHook>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{H:mm:ss.SSS} [%highlight(%-5level)] %logger{15} -  %message%ex%n</pattern>
+        </encoder>
+        <withJansi>true</withJansi>
+    </appender>
+
+    <!-- Libraries should use INFO generally -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+
+</configuration>

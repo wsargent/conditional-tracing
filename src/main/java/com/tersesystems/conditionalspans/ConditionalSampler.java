@@ -1,5 +1,7 @@
 package com.tersesystems.conditionalspans;
 
+import com.launchdarkly.sdk.LDUser;
+import com.launchdarkly.sdk.server.LDClient;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.trace.SpanKind;
 import io.opentelemetry.context.Context;
@@ -15,6 +17,8 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 import java.util.List;
 
+import static com.tersesystems.conditionalspans.Main.LD_USER_KEY;
+
 /**
  * This class calls out to a groovy script to do sampling, so we can change sampling on the fly.
  * <p>
@@ -26,19 +30,37 @@ public class ConditionalSampler implements Sampler {
     private static final ScriptEngineManager factory = new ScriptEngineManager();
     private static final String engineName = "groovy";
 
+    private static final LDClient ldClient = Main.ldClient;
     private static final boolean rethrow = true;
+    private static final String methodName = "shouldSample";
 
     private final ScriptEngine engine = factory.getEngineByName(engineName);
     private final ConditionSource source;
-    private static final String methodName = "shouldSample";
+    private final Sampler defaultSampler;
 
-    public ConditionalSampler(ConditionSource source) {
+    public ConditionalSampler(ConditionSource source, Sampler defaultSampler) {
         this.source = source;
+        this.defaultSampler = defaultSampler;
         eval();
     }
 
     @Override
     public SamplingResult shouldSample(Context parentContext, String traceId, String name, SpanKind spanKind, Attributes attributes, List<LinkData> parentLinks) {
+        LDUser user = parentContext.get(LD_USER_KEY);
+        if (isEnabled(user)) {
+            return scriptHandle(parentContext, traceId, name, spanKind, attributes, parentLinks);
+        } else {
+            System.out.println("shouldSample: feature flag is disabled, no dynamic sampling");
+            return defaultSampler.shouldSample(parentContext, traceId, name, spanKind, attributes, parentLinks);
+        }
+    }
+
+    private boolean isEnabled(LDUser user) {
+        //return true;
+        return ldClient.boolVariation("sampler-enabled", user, false);
+    }
+
+    private SamplingResult scriptHandle(Context parentContext, String traceId, String name, SpanKind spanKind, Attributes attributes, List<LinkData> parentLinks) {
         if (source.isInvalid()) {
             eval();
         }

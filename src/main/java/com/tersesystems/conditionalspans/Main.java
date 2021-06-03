@@ -16,13 +16,13 @@ import java.util.function.Consumer;
 import static java.util.Objects.requireNonNull;
 
 public class Main {
+    static final LDClient ldClient = new LDClient(requireNonNull(System.getenv("LD_API_KEY")));
 
     private static final Path samplerPath = Paths.get("src/main/groovy/sampler.groovy");
     private static final Path spanBuilderPath = Paths.get("src/main/groovy/spanbuilder.groovy");
     private static final OpenTelemetry openTelemetry = ExampleConfiguration.initOpenTelemetry(samplerPath, spanBuilderPath);
 
     private static final Tracer tracer = openTelemetry.getTracer("hello-i-am-instrumentation");
-    private static final LDClient ldClient = new LDClient(requireNonNull(System.getenv("LD_API_KEY")));
 
     public static final ContextKey<LDClient> LD_CLIENT_KEY = ContextKey.named("ldClient");
     public static final ContextKey<LDUser> LD_USER_KEY = ContextKey.named("ldUser");

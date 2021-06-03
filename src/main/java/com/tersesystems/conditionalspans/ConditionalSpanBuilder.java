@@ -1,7 +1,10 @@
 package com.tersesystems.conditionalspans;
 
+import com.launchdarkly.sdk.LDUser;
+import com.launchdarkly.sdk.server.LDClient;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
+import io.opentelemetry.api.common.AttributesBuilder;
 import io.opentelemetry.api.trace.*;
 import io.opentelemetry.context.Context;
 
@@ -108,12 +111,25 @@ class ConditionalSpanBuilder implements SpanBuilder {
 
     @Override
     public Span startSpan() {
+        Context context = Context.current();
+        LDUser user = context.get(Main.LD_USER_KEY);
+        if (! isEnabled(user)) {
+            System.out.println("startSpan: feature flag is disabled, starting span");
+            return spanBuilder.startSpan();
+        }
+
         final boolean result = evaluate(spanName, parent, attributes);
         if (result) {
             return spanBuilder.startSpan();
         } else {
+            // XXX should return current + attributes etc to be consistent
             return Span.current();
         }
+    }
+
+    private boolean isEnabled(LDUser user) {
+        //return true;
+        return Main.ldClient.boolVariation("spanbuilder-enabled", user, false);
     }
 
     protected boolean evaluate(String spanName, Context parent, HashMap<AttributeKey<?>, Object> attributes) {

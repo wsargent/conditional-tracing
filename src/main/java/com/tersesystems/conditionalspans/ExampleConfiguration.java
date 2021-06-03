@@ -1,5 +1,6 @@
 package com.tersesystems.conditionalspans;
 
+import com.launchdarkly.sdk.LDUser;
 import io.honeycomb.opentelemetry.DistroMetadata;
 import io.honeycomb.opentelemetry.EnvironmentConfiguration;
 import io.opentelemetry.api.OpenTelemetry;
@@ -40,12 +41,13 @@ class ExampleConfiguration {
     }
 
     static Sampler sampler(Path path) {
+        Sampler defaultSampler = Sampler.alwaysOn();
         try {
             final ConditionSource conditionSource = new FileConditionSource(path);
-            return new ConditionalSampler(conditionSource);
+            return new ConditionalSampler(conditionSource, defaultSampler);
         } catch (IOException ie) {
             ie.printStackTrace();
-            return Sampler.alwaysOn();
+            return defaultSampler;
         }
     }
 

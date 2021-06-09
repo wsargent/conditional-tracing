@@ -2,6 +2,8 @@
 
 This is an implementation of OpenTelemetry with "conditional spans" -- spans driven by application driven conditions rather than by the tracing infrastructure.
 
+This is part of a talk on [conditional distributed tracing](https://o11ycon-hnycon.io/agenda/conditional-distributed-tracing/) given at [o11ycon 2021](https://o11ycon-hnycon.io/).  Slides are [here](slides.pdf).
+
 There are two implementations here, a conditional sampler and a conditional span builder.  They serve slightly different purposes, and are both useful in their own right.
 
 This is a proof of concept only, and is not intended for production use.
